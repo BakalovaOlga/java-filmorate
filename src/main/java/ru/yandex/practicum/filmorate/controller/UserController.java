@@ -13,8 +13,9 @@ import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -24,8 +25,8 @@ public class UserController {
     private final Map<Long, User> users = new HashMap<>();
 
     @GetMapping
-    public Collection<User> getAllUsers() {
-        return users.values();
+    public List<User> getAllUsers() {
+        return new ArrayList<>(users.values());
     }
 
     @PostMapping

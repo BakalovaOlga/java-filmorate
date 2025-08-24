@@ -10,9 +10,6 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
-/**
- * User
- */
 @Data
 @AllArgsConstructor
 public class User {
@@ -21,7 +18,6 @@ public class User {
     @NotBlank(message = "E-mail не может быть пустым.")
     private String email;
     @NotBlank(message = "Логин не может быть пустым.")
-    @NotNull
     private String login;
     private String name;
     @PastOrPresent(message = "Дата рождения не может быть в будущем.")

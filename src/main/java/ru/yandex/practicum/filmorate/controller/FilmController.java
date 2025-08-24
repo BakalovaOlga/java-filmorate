@@ -13,8 +13,9 @@ import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
-import java.util.Collection;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -24,8 +25,8 @@ public class FilmController {
     private final Map<Long, Film> films = new HashMap<>();
 
     @GetMapping
-    public Collection<Film> getAllFilms() {
-        return films.values();
+    public List<Film> getAllFilms() {
+        return new ArrayList<>(films.values());
     }
 
     @PostMapping
