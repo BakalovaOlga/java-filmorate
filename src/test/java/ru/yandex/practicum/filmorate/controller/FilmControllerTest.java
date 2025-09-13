@@ -30,11 +30,12 @@ public class FilmControllerTest {
         filmService = new FilmService(filmStorage, userStorage);
         film = new Film();
         film.setName("The Devil Wears Prada");
-        film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди " +
-                "по окончании университета получает должность помощницы всесильной Миранды Пристли, " +
-                "деспотичного редактора одного из крупнейших нью-йоркских журналов мод.");
+        film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди "
+               + "по окончании университета получает должность помощницы всесильной Миранды Пристли, "
+               + "деспотичного редактора одного из крупнейших нью-йоркских журналов мод.");
         film.setReleaseDate(LocalDate.of(2006, 6, 19));
-        film.setDuration(109);}
+        film.setDuration(109);
+    }
 
 
     @Test
