@@ -1,8 +1,10 @@
 package ru.yandex.practicum.filmorate.controller;
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/films")
 @RequiredArgsConstructor
+@Validated
 public class FilmController {
     private final FilmService filmService;
 
@@ -32,7 +35,7 @@ public class FilmController {
     }
 
     @GetMapping("/{id}")
-    public Film getFilmById(@PathVariable("id") Long id) {
+    public Film getFilmById(@PathVariable("id") @Positive Long id) {
         log.info("Получение фильма с ID: {}", id);
         return filmService.getFilmById(id);
     }
@@ -50,19 +53,23 @@ public class FilmController {
     }
 
     @PutMapping("/{id}/like/{userId}")
-    public void addLikeToFilm(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+    public void addLikeToFilm(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("userId") @Positive Long userId) {
         log.info("Пользователь с ID: {} поставил лайк фильму с ID: {}.", userId, id);
         filmService.addLikeToFilm(id, userId);
     }
 
     @DeleteMapping("/{id}/like/{userId}")
-    public void removeLikeToFilm(@PathVariable("id") Long id, @PathVariable("userId") Long userId) {
+    public void removeLikeToFilm(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("userId") @Positive Long userId) {
         log.info("Пользователь с ID: {} убрал лайк с фильма с ID: {}.", userId, id);
         filmService.removeLikeFromFilm(id, userId);
     }
 
     @GetMapping("/popular")
-    public List<Film> getPopularFilms(@RequestParam(required = false, defaultValue = "10") Integer count) {
+    public List<Film> getPopularFilms(@RequestParam(defaultValue = "10") Integer count) {
         log.info("Получен топ {} популярных фильмов", count);
         return filmService.getPopularFilms(count);
     }

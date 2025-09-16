@@ -2,8 +2,10 @@ package ru.yandex.practicum.filmorate.controller;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/users")
 @RequiredArgsConstructor
+@Validated
 public class UserController {
     private final UserService userService;
 
@@ -31,7 +34,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public User getUserById(@PathVariable("id") Long id) {
+    public User getUserById(@PathVariable("id") @Positive Long id) {
         return userService.getUserById(id);
     }
 
@@ -46,25 +49,31 @@ public class UserController {
     }
 
     @PutMapping("/{id}/friends/{friendUserId}")
-    public void addToFriends(@PathVariable("id") Long id, @PathVariable("friendUserId") Long friendUserId) {
+    public void addToFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("friendUserId") @Positive Long friendUserId) {
         log.info("Пользователь с ID: {} добавил в друзья пльзователя с ID: {}", id, friendUserId);
         userService.addToFriends(id, friendUserId);
     }
 
     @DeleteMapping("/{id}/friends/{friendUserId}")
-    public void removeFromFriends(@PathVariable("id") Long id, @PathVariable("friendUserId") Long friendUserId) {
+    public void removeFromFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("friendUserId") @Positive Long friendUserId) {
         log.info("Пользователь с ID: {} убрал из друзей пльзователя с ID: {}", id, friendUserId);
         userService.removeFromFriends(id, friendUserId);
     }
 
     @GetMapping("/{id}/friends")
-    public List<User> getUserFriends(@PathVariable("id") Long id) {
+    public List<User> getUserFriends(@PathVariable("id") @Positive Long id) {
         log.info("Получен список друзей пользователя с ID: {}", id);
         return userService.getUserFriends(id);
     }
 
     @GetMapping("/{id}/friends/common/{otherUserId}")
-    public List<User> getMutualFriends(@PathVariable("id") Long id, @PathVariable("otherUserId") Long otherUserId) {
+    public List<User> getMutualFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("otherUserId") @Positive Long otherUserId) {
         log.info("Получен список общих друзей пользователя с ID: {} и {}", id, otherUserId);
         return userService.getCommonFriends(id, otherUserId);
     }
