@@ -2,78 +2,79 @@ package ru.yandex.practicum.filmorate.controller;
 
 
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
+import ru.yandex.practicum.filmorate.service.UserService;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
 
 @Slf4j
 @RestController
 @RequestMapping("/users")
+@RequiredArgsConstructor
+@Validated
 public class UserController {
-    private final Map<Long, User> users = new HashMap<>();
+    private final UserService userService;
 
     @GetMapping
     public List<User> getAllUsers() {
-        return new ArrayList<>(users.values());
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public User getUserById(@PathVariable("id") @Positive Long id) {
+        return userService.getUserById(id);
     }
 
     @PostMapping
     public User createUser(@Valid @RequestBody User newUser) {
-        validateUser(newUser);
-        newUser.setId(getNextId());
-        users.put(newUser.getId(), newUser);
-        log.info("Пользователь с ID {} успешно добавлен", newUser.getId());
-        return newUser;
+        return userService.createUser(newUser);
     }
 
     @PutMapping
     public User updateUser(@Valid @RequestBody User user) {
-        if (user.getId() == null) {
-            log.info("Не указан id для обновляемого пользователя. ");
-            throw new ValidationException("Id обновляемого пользователя не задан.");
-        }
-
-        if (!users.containsKey(user.getId())) {
-            log.info("Пользователь с id = {} не найден", user.getId());
-            throw new NotFoundException("Пользователь с ID " + user.getId() + " не найден.");
-        } else {
-            validateUser(user);
-            users.put(user.getId(), user);
-            log.info("Пользователь с ID {} успешно обновлен", user.getId());
-        }
-        return user;
+        return userService.updateUser(user);
     }
 
-    private long getNextId() {
-        long currentMaxId = users.keySet()
-                .stream()
-                .mapToLong(id -> id)
-                .max()
-                .orElse(0);
-        return ++currentMaxId;
+    @PutMapping("/{id}/friends/{friendUserId}")
+    public void addToFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("friendUserId") @Positive Long friendUserId) {
+        log.info("Пользователь с ID: {} добавил в друзья пльзователя с ID: {}", id, friendUserId);
+        userService.addToFriends(id, friendUserId);
     }
 
-    private void validateUser(User user) {
-        if (user.getLogin().contains(" ")) {
-            throw new ValidationException("Логин не может содержать пробелы.");
-        }
+    @DeleteMapping("/{id}/friends/{friendUserId}")
+    public void removeFromFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("friendUserId") @Positive Long friendUserId) {
+        log.info("Пользователь с ID: {} убрал из друзей пльзователя с ID: {}", id, friendUserId);
+        userService.removeFromFriends(id, friendUserId);
+    }
 
-        if (user.getName() == null || user.getName().isBlank()) {
-            user.setName(user.getLogin());
-            log.info("Пустое отображаемое имя. Использован логин.");
-        }
+    @GetMapping("/{id}/friends")
+    public List<User> getUserFriends(@PathVariable("id") @Positive Long id) {
+        log.info("Получен список друзей пользователя с ID: {}", id);
+        return userService.getUserFriends(id);
+    }
 
+    @GetMapping("/{id}/friends/common/{otherUserId}")
+    public List<User> getMutualFriends(
+            @PathVariable("id") @Positive Long id,
+            @PathVariable("otherUserId") @Positive Long otherUserId) {
+        log.info("Получен список общих друзей пользователя с ID: {} и {}", id, otherUserId);
+        return userService.getCommonFriends(id, otherUserId);
     }
 }
