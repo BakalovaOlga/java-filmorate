@@ -29,7 +29,7 @@ class FilmoRateApplicationTests {
 
         User savedUser = userStorage.createUser(user);
 
-        User foundUser= userStorage.getUserById(1L);
+        User foundUser = userStorage.getUserById(1L);
 
         assertThat(foundUser)
                 .isNotNull()
