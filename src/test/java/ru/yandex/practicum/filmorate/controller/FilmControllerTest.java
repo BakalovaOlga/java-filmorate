@@ -5,10 +5,7 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+import ru.yandex.practicum.filmorate.storage.*;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -21,13 +18,18 @@ public class FilmControllerTest {
     private FilmStorage filmStorage;
     private FilmService filmService;
     private UserStorage userStorage;
+    private GenreStorage genreStorage;
+    private MpaStorage mpaStorage;
     private Film film;
 
     @BeforeEach
     void setUp() {
         filmStorage = new InMemoryFilmStorage();
         userStorage = new InMemoryUserStorage();
-        filmService = new FilmService(filmStorage, userStorage);
+        genreStorage = new InMemoryGenreStorage();
+        mpaStorage = new InMemoryMpaStorage();
+
+        filmService = new FilmService(filmStorage, userStorage, genreStorage, mpaStorage);
         film = new Film();
         film.setName("The Devil Wears Prada");
         film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди "
