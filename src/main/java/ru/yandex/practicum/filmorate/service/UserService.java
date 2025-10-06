@@ -46,6 +46,11 @@ public class UserService {
                 .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден"));
     }
 
+    public void deleteUser(Long userId) {
+        getUserById(userId); // проверяем что пользователь существует
+        userStorage.deleteUser(userId);
+    }
+
     public void addToFriends(Long userId, Long friendId) {
         User user = getUserById(userId);
         User friend = getUserById(friendId);

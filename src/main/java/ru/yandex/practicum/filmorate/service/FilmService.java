@@ -57,6 +57,11 @@ public class FilmService {
         return getFilmById(film.getId());
     }
 
+    public void deleteFilm(Long filmId) {
+        getFilmById(filmId); // проверяем что фильм существует
+        filmStorage.deleteFilm(filmId);
+    }
+
     public List<Film> getAllFilms() {
         List<Film> films = filmStorage.getAllFilms();
         genreService.loadFilmsGenres(films);

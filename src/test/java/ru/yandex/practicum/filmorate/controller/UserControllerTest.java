@@ -2,33 +2,38 @@ package ru.yandex.practicum.filmorate.controller;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.time.LocalDate;
-import java.util.Collection;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@AutoConfigureTestDatabase
 class UserControllerTest {
 
-    private UserStorage userStorage;
+    @Autowired
     private UserService userService;
+
     private User user;
 
     @BeforeEach
     void setUp() {
-        userStorage = new InMemoryUserStorage();
-        userService = new UserService(userStorage);
-        user = new User(1L, "hello@email.com", "neo", "Neo",
+        userService.getAllUsers().forEach(u -> userService.deleteUser(u.getId()));
+
+        user = new User(null, "hello@email.com", "neo", "Neo",
                 LocalDate.of(1990, 2, 6));
     }
 
     @Test
-    void shouldAdduser() {
-        User added = userStorage.createUser(user);
+    void shouldAddUser() {
+        User added = userService.createUser(user);
         assertNotNull(added.getId());
         assertEquals("Neo", added.getName());
     }
@@ -49,9 +54,9 @@ class UserControllerTest {
 
     @Test
     void shouldUpdateExistingUser() {
-        User added = userStorage.createUser(user);
+        User added = userService.createUser(user);
         added.setName("Нео");
-        User updated = userStorage.updateUser(added);
+        User updated = userService.updateUser(added);
 
         assertEquals("Нео", updated.getName());
         assertEquals(added.getId(), updated.getId());
@@ -61,14 +66,33 @@ class UserControllerTest {
     void shouldThrowNotFoundWhenUpdatingNonExistentUser() {
         user.setId(999L); // Несуществующий ID
         NotFoundException ex = assertThrows(NotFoundException.class,
-                () -> userStorage.updateUser(user));
+                () -> userService.updateUser(user));
         assertEquals("Пользователь с ID 999 не найден.", ex.getMessage());
     }
 
     @Test
     void shouldReturnAllUsers() {
-        userStorage.createUser(user);
-        Collection<User> users = userStorage.getAllUsers();
+        userService.createUser(user);
+        List<User> users = userService.getAllUsers();
         assertEquals(1, users.size());
+    }
+
+    @Test
+    void shouldGetUserById() {
+        User added = userService.createUser(user);
+        User found = userService.getUserById(added.getId());
+
+        assertEquals(added.getId(), found.getId());
+        assertEquals("Neo", found.getName());
+    }
+
+    @Test
+    void shouldDeleteUser() {
+        User added = userService.createUser(user);
+        userService.deleteUser(added.getId());
+
+        NotFoundException ex = assertThrows(NotFoundException.class,
+                () -> userService.getUserById(added.getId()));
+        assertEquals("Пользователь с ID " + added.getId() + " не найден.", ex.getMessage());
     }
 }
