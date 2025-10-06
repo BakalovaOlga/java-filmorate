@@ -11,6 +11,7 @@ import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -29,10 +30,11 @@ class FilmoRateApplicationTests {
 
         User savedUser = userStorage.createUser(user);
 
-        User foundUser = userStorage.getUserById(1L);
+        Optional<User> foundUser = userStorage.getUserById(1L);
 
         assertThat(foundUser)
-                .isNotNull()
+                .isPresent()
+                .get()
                 .hasFieldOrPropertyWithValue("id", 1L);
     }
 }

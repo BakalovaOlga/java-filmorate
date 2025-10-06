@@ -9,13 +9,13 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.mappers.UserRowMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @Qualifier("userDbStorage")
@@ -77,57 +77,31 @@ public class UserDbStorage implements UserStorage {
     }
 
     @Override
-    public User getUserById(Long id) {
+    public Optional<User> getUserById(Long id) {
         String sql = "SELECT * FROM users WHERE user_id = ?";
         List<User> users = jdbcTemplate.query(sql, userRowMapper, id);
 
         if (users.isEmpty()) {
-            throw new NotFoundException("Пользователь с id=" + id + " не найден");
+            return Optional.empty();
         }
 
-        return users.getFirst();
+        return Optional.of(users.getFirst());
     }
 
     @Override
     public void addFriend(Long userId, Long friendId) {
-        getUserById(userId);
-        getUserById(friendId);
-
-        //проверка на добавление в друзья себя самого
-        if (userId.equals(friendId)) {
-            throw new ValidationException("Нельзя добавить себя в друзья");
-        }
-
-        //проверка на повторное добавление
-        String checkSql = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
-        Integer count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, friendId);
-
-        if (count != null && count > 0) {
-            throw new ValidationException("Пользователь уже добавлен в друзья");
-        }
-
-        //односторонняя дружба
         String sql = "INSERT INTO friends (user_id, friend_id) VALUES (?, ?)";
         jdbcTemplate.update(sql, userId, friendId);
     }
 
     @Override
     public void removeFriend(Long userId, Long friendId) {
-        getUserById(userId);
-        getUserById(friendId);
-
         String sql = "DELETE FROM friends WHERE user_id = ? AND friend_id = ?";
-        int deletedRows = jdbcTemplate.update(sql, userId, friendId);
-
-        if (deletedRows == 0) {
-            log.info("Пользователь с id={} не найден в друзьях у пользователя с id={}", friendId, userId);
-        }
+        jdbcTemplate.update(sql, userId, friendId);
     }
 
     @Override
     public List<User> getFriends(Long userId) {
-        getUserById(userId);
-
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friends f ON u.user_id = f.friend_id " +
                 "WHERE f.user_id = ? " +
@@ -138,9 +112,6 @@ public class UserDbStorage implements UserStorage {
 
     @Override
     public List<User> getCommonFriends(Long userId, Long otherUserId) {
-        getUserById(userId);
-        getUserById(otherUserId);
-
         String sql = "SELECT u.* FROM users u " +
                 "JOIN friends f1 ON u.user_id = f1.friend_id " +
                 "JOIN friends f2 ON u.user_id = f2.friend_id " +
@@ -148,6 +119,12 @@ public class UserDbStorage implements UserStorage {
                 "ORDER BY u.user_id";
 
         return jdbcTemplate.query(sql, userRowMapper, userId, otherUserId);
+    }
+
+    public boolean friendshipExists(Long userId, Long friendId) {
+        String sql = "SELECT COUNT(*) FROM friends WHERE user_id = ? AND friend_id = ?";
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class, userId, friendId);
+        return count != null && count > 0;
     }
 
     private Long getGeneratedId(KeyHolder keyHolder) {

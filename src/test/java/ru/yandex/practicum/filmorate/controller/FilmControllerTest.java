@@ -22,22 +22,22 @@ public class FilmControllerTest {
     private MpaStorage mpaStorage;
     private Film film;
 
-    @BeforeEach
-    void setUp() {
-        filmStorage = new InMemoryFilmStorage();
-        userStorage = new InMemoryUserStorage();
-        genreStorage = new InMemoryGenreStorage();
-        mpaStorage = new InMemoryMpaStorage();
-
-        filmService = new FilmService(filmStorage, userStorage, genreStorage, mpaStorage);
-        film = new Film();
-        film.setName("The Devil Wears Prada");
-        film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди "
-               + "по окончании университета получает должность помощницы всесильной Миранды Пристли, "
-               + "деспотичного редактора одного из крупнейших нью-йоркских журналов мод.");
-        film.setReleaseDate(LocalDate.of(2006, 6, 19));
-        film.setDuration(109);
-    }
+//    @BeforeEach
+//    void setUp() {
+//        filmStorage = new InMemoryFilmStorage();
+//        userStorage = new InMemoryUserStorage();
+//        genreStorage = new InMemoryGenreStorage();
+//        mpaStorage = new InMemoryMpaStorage();
+//
+//        filmService = new FilmService(filmStorage, userStorage, genreStorage, mpaStorage);
+//        film = new Film();
+//        film.setName("The Devil Wears Prada");
+//        film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди "
+//               + "по окончании университета получает должность помощницы всесильной Миранды Пристли, "
+//               + "деспотичного редактора одного из крупнейших нью-йоркских журналов мод.");
+//        film.setReleaseDate(LocalDate.of(2006, 6, 19));
+//        film.setDuration(109);
+//    }
 
 
     @Test

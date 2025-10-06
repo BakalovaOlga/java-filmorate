@@ -5,15 +5,12 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.yandex.practicum.filmorate.dao.mappers.GenreRowMapper;
 import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
-import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
 import ru.yandex.practicum.filmorate.storage.GenreStorage;
 
-import java.util.Comparator;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Repository
 @Qualifier("genreDbStorage")
@@ -26,46 +23,6 @@ public class GenreDbStorage implements GenreStorage {
         this.genreRowMapper = genreRowMapper;
     }
 
-    @Override
-    public void loadFilmGenres(Film film) {
-        String sql = "SELECT g.genre_id,  g.genre_name " +
-                "FROM film_genre fg " +
-                "JOIN genre g ON fg.genre_id = g.genre_id " +
-                "WHERE fg.film_id = ? " +
-                "ORDER BY g.genre_id";
-
-        Set<Genre> genres = new LinkedHashSet<>(jdbcTemplate.query(sql, genreRowMapper, film.getId()));
-        film.setGenres(genres);
-    }
-
-    @Override
-    public void saveFilmGenres(Film film) {
-        if (film.getGenres() == null || film.getGenres().isEmpty()) {
-            return;
-        }
-
-        List<Genre> sortedGenres = film.getGenres().stream()
-                .sorted(Comparator.comparing(Genre::getId))
-                .collect(Collectors.toList());
-
-        String sql = "INSERT INTO film_genre (film_id, genre_id) VALUES (?, ?)";
-
-        for (Genre genre : sortedGenres) {
-            jdbcTemplate.update(sql, film.getId(), genre.getId());
-        }
-    }
-
-    @Override
-    public void updateFilmGenres(Film film) {
-        //удаляем старые жанры
-        String deleteSql = "DELETE FROM film_genre WHERE film_id = ?";
-        jdbcTemplate.update(deleteSql, film.getId());
-
-        //добавляем новые жанры
-        saveFilmGenres(film);
-    }
-
-    //для получения жанров
     @Override
     public List<Genre> getAllGenres() {
         String sql = "SELECT genre_id, genre_name FROM genre ORDER BY genre_id";
@@ -82,5 +39,27 @@ public class GenreDbStorage implements GenreStorage {
         }
 
         return genreList.getFirst();
+    }
+
+    @Override
+    public Map<Long, Set<Genre>> getGenresForFilms(List<Long> filmIds) {
+        if (filmIds.isEmpty()) {
+            return Map.of();
+        }
+
+        String sql = "SELECT film_id, genre_id FROM film_genre " +
+                "WHERE film_id IN (" +
+                filmIds.stream().map(String::valueOf).collect(Collectors.joining(",")) + ") " +
+                "ORDER BY film_id, genre_id";
+
+        Map<Long, Set<Genre>> genresMap = new HashMap<>();
+        jdbcTemplate.query(sql, rs -> {
+            Long filmId = rs.getLong("film_id");
+            Integer genreId = rs.getInt("genre_id");
+            genresMap.computeIfAbsent(filmId, k -> new LinkedHashSet<>())
+                    .add(new Genre(genreId, null));
+        });
+
+        return genresMap;
     }
 }

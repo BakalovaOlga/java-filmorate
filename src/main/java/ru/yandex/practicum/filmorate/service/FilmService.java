@@ -1,92 +1,104 @@
 package ru.yandex.practicum.filmorate.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.Genre;
-import ru.yandex.practicum.filmorate.model.Mpa;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
-import ru.yandex.practicum.filmorate.storage.GenreStorage;
-import ru.yandex.practicum.filmorate.storage.MpaStorage;
-import ru.yandex.practicum.filmorate.storage.UserStorage;
+
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
-
+@Slf4j
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-    private final GenreStorage genreStorage;
-    private final MpaStorage mpaStorage;
-    private final UserStorage userStorage;
+    private final UserService userService;
+    private final GenreService genreService;
+    private final MpaService mpaService;
+    private final LikeService likeService;
 
     public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
-                       @Qualifier("userDbStorage") UserStorage userStorage,
-                       @Qualifier("genreDbStorage") GenreStorage genreStorage,
-                       @Qualifier("mpaDbStorage") MpaStorage mpaStorage) {
+                       UserService userService,
+                       GenreService genreService,
+                       MpaService mpaService,
+                       LikeService likeService) {
         this.filmStorage = filmStorage;
-        this.userStorage = userStorage;
-        this.genreStorage = genreStorage;
-        this.mpaStorage = mpaStorage;
+        this.userService = userService;
+        this.genreService = genreService;
+        this.mpaService = mpaService;
+        this.likeService = likeService;
     }
 
     public Film addFilm(Film newFilm) {
         validateFilm(newFilm);
-        return filmStorage.addFilm(newFilm);
+        mpaService.getMpaById(newFilm.getMpa().getId());
+        genreService.validateGenresExist(newFilm.getGenres());
+
+        Film film = filmStorage.addFilm(newFilm);
+        genreService.saveFilmGenres(film);
+        return film;
     }
 
     public Film updateFilm(Film film) {
         validateFilm(film);
         filmStorage.getFilmById(film.getId());
-        return filmStorage.updateFilm(film);
+
+        mpaService.getMpaById(film.getMpa().getId());
+        genreService.validateGenresExist(film.getGenres());
+
+        filmStorage.updateFilm(film);
+        genreService.updateFilmGenres(film);
+        return getFilmById(film.getId());
     }
 
     public List<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        List<Film> films = filmStorage.getAllFilms();
+        genreService.loadFilmsGenres(films);
+        likeService.loadFilmsLikes(films);
+        return films;
     }
 
-    public Film getFilmById(Long id) {
-        return filmStorage.getFilmById(id);
-    }
+    public Film getFilmById(Long filmId) {
+        log.info("Попытка получения фильма по ID: {}", filmId);
+        Film film = filmStorage.getFilmById(filmId)
+                .orElseThrow(() -> new NotFoundException("Фильм с ID " + filmId + " не найден"));
 
-    public void addLikeToFilm(Long filmId, Long userId) {
-        userStorage.getUserById(userId);
+        Set<Genre> genres = genreService.findGenreByFilmId(filmId);
+        film.setGenres(genres);
 
-        filmStorage.addLike(filmId, userId);
-    }
+        Set<Long> likes = likeService.getLikesForFilm(filmId);
+        film.getLikes().addAll(likes);
 
-    public void removeLikeFromFilm(Long filmId, Long userId) {
-        userStorage.getUserById(userId);
-
-        filmStorage.removeLike(filmId, userId);
+        return film;
     }
 
     public List<Film> getPopularFilms(int count) {
         if (count <= 0) {
             throw new ValidationException("Количество фильмов должно быть положительным");
         }
+        List<Film> films = filmStorage.getPopularFilms(count);
 
-        return filmStorage.getPopularFilms(count);
+        genreService.loadFilmsGenres(films);
+        likeService.loadFilmsLikes(films);
+
+        return films;
     }
 
-    public List<Mpa> getAllMpa() {
-        return mpaStorage.getAllMpa();
+    public void addLikeToFilm(Long filmId, Long userId) {
+        userService.getUserById(userId);
+        likeService.addLike(filmId, userId);
     }
 
-    public Mpa getMpaById(int id) {
-        return mpaStorage.getMpaById(id);
+    public void removeLikeFromFilm(Long filmId, Long userId) {
+        userService.getUserById(userId);
+        likeService.removeLike(filmId, userId);
     }
-
-    public List<Genre> getAllGenres() {
-        return genreStorage.getAllGenres();
-    }
-
-    public Genre getGenreById(int id) {
-        return genreStorage.getGenreById(id);
-    }
-
 
     private void validateFilm(Film film) {
         if (film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {

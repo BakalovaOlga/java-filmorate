@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import ru.yandex.practicum.filmorate.exceptions.NotFoundException;
 import ru.yandex.practicum.filmorate.exceptions.ValidationException;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
@@ -41,24 +42,47 @@ public class UserService {
     }
 
     public User getUserById(Long id) {
-        return userStorage.getUserById(id);
+        return userStorage.getUserById(id)
+                .orElseThrow(() -> new NotFoundException("Пользователь с id=" + id + " не найден"));
     }
 
-    public void addToFriends(Long userId, Long friendUserId) {
-        userStorage.addFriend(userId, friendUserId);
-        log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendUserId);
+    public void addToFriends(Long userId, Long friendId) {
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+
+        if (userId.equals(friendId)) {
+            throw new ValidationException("Нельзя добавить себя в друзья");
+        }
+
+        if (userStorage.friendshipExists(userId, friendId)) {
+            throw new ValidationException("Пользователь уже добавлен в друзья");
+        }
+
+        userStorage.addFriend(userId, friendId);
+        log.info("Пользователь {} добавил в друзья пользователя {}", userId, friendId);
     }
 
-    public void removeFromFriends(Long userId, Long friendUserId) {
-        userStorage.removeFriend(userId, friendUserId);
-        log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendUserId);
+
+    public void removeFromFriends(Long userId, Long friendId) {
+        User user = getUserById(userId);
+        User friend = getUserById(friendId);
+
+        if (!userStorage.friendshipExists(userId, friendId)) {
+            log.info("Пользователь с id={} не найден в друзьях у пользователя с id={}", friendId, userId);
+        } else {
+            userStorage.removeFriend(userId, friendId);
+            log.info("Пользователь {} удалил из друзей пользователя {}", userId, friendId);
+        }
     }
 
     public List<User> getUserFriends(Long id) {
+        getUserById(id);
         return userStorage.getFriends(id);
     }
 
     public List<User> getCommonFriends(Long userId, Long otherUserId) {
+        getUserById(userId);
+        getUserById(otherUserId);
         return userStorage.getCommonFriends(userId, otherUserId);
     }
 

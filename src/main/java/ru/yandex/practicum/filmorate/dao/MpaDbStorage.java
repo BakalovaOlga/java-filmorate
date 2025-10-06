@@ -33,7 +33,7 @@ public class MpaDbStorage implements MpaStorage {
         List<Mpa> mpaList = jdbcTemplate.query(sql, mpaRowMapper, id);
 
         if (mpaList.isEmpty()) {
-            throw new NotFoundException("Рейтинг MPA с id=" + id + " не найден");
+            throw new NotFoundException("Рейтинг MPA с id=" + id + " не найден"); // ← БРОСАЕМ ИСКЛЮЧЕНИЕ
         }
 
         return mpaList.getFirst();
