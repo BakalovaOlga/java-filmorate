@@ -46,8 +46,7 @@ public class FilmControllerTest {
         film = new Film();
         film.setName("The Devil Wears Prada");
         film.setDescription("Мечтающая стать журналисткой провинциальная девушка Энди "
-                + "по окончании университета получает должность помощницы всесильной Миранды Пристли, "
-                + "деспотичного редактора одного из крупнейших нью-йоркских журналов мод.");
+                + "по окончании университета получает должность помощницы.");
         film.setReleaseDate(LocalDate.of(2006, 6, 19));
         film.setDuration(109);
         film.setMpa(new Mpa(1, null)); // Указываем существующий MPA ID

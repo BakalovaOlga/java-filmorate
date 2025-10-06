@@ -67,7 +67,7 @@ class UserControllerTest {
         user.setId(999L); // Несуществующий ID
         NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> userService.updateUser(user));
-        assertEquals("Пользователь с ID 999 не найден.", ex.getMessage());
+        assertEquals("Пользователь с id=999 не найден", ex.getMessage());
     }
 
     @Test
@@ -93,6 +93,6 @@ class UserControllerTest {
 
         NotFoundException ex = assertThrows(NotFoundException.class,
                 () -> userService.getUserById(added.getId()));
-        assertEquals("Пользователь с ID " + added.getId() + " не найден.", ex.getMessage());
+        assertEquals("Пользователь с id=" + added.getId() + " не найден", ex.getMessage());
     }
 }
